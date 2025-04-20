@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pandas as pd
 from flask import Flask, render_template, request
@@ -42,7 +43,6 @@ def home():
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    # Get input values from form
     age = float(request.form['age'])
     gender = request.form['gender']
     height = float(request.form['height'])
@@ -54,20 +54,13 @@ def predict():
     tue = float(request.form['tue'])
     calc = request.form['calc']
 
-    # Convert to dataframe
     input_data = pd.DataFrame([[age, gender, height, weight, fcvc, ncp, faf, ch2o, tue, calc]],
                               columns=features)
     
-    # One-hot encode
     input_data = pd.get_dummies(input_data)
-    
-    # Align with training data
     input_data = input_data.reindex(columns=X.columns, fill_value=0)
-    
-    # Scale
     input_scaled = scaler.transform(input_data)
 
-    # Predict
     dt_pred = dt.predict(input_scaled)
     rf_pred = rf.predict(input_scaled)
     ensemble_pred = mode([dt_pred, rf_pred])[0][0]
@@ -76,4 +69,5 @@ def predict():
     return render_template('index.html', prediction=result)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get('PORT', 5000))  # Use PORT from Render or fallback to 5000 locally
+    app.run(host='0.0.0.0', port=port, debug=True)
